@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CV Career Matcher</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #f7f8fa;
+        --card: #ffffff;
+        --primary: #4f46e5;
+        --primary-dark: #4338ca;
+        --success: #16a34a;
+        --warning: #d97706;
+        --danger: #dc2626;
+        --text: #111827;
+        --text-secondary: #6b7280;
+        --border: #e5e7eb;
+        --radius-card: 8px;
+        --radius-input: 6px;
+        --shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Inter", system-ui, -apple-system, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+
+      .app-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 76px;
+        background: var(--bg);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 32px;
+        z-index: 10;
+      }
+
+      .app-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+      }
+
+      .app-subtitle {
+        font-size: 0.82rem;
+        color: var(--text-secondary);
+        margin-top: 4px;
+      }
+
+      .status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.88rem;
+        color: var(--text-secondary);
+      }
+
+      .status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--danger);
+      }
+
+      .status-dot.active {
+        background: var(--success);
+      }
+
+      .main {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 108px 24px 64px;
+      }
+
+      .card {
+        background: var(--card);
+        border-radius: var(--radius-card);
+        box-shadow: var(--shadow);
+        padding: 24px;
+      }
+
+      .phase {
+        display: block;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      .label {
+        font-weight: 500;
+        margin-bottom: 10px;
+        display: block;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      .dropzone {
+        border: 2px dashed var(--primary);
+        border-radius: var(--radius-card);
+        padding: 20px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        transition: border-color 0.2s ease, background 0.2s ease;
+      }
+
+      .dropzone.dragover {
+        background: #eef2ff;
+        border-style: solid;
+      }
+
+      .dropzone.has-file {
+        border-color: var(--success);
+        border-style: solid;
+      }
+
+      .dropzone-text {
+        font-weight: 500;
+      }
+
+      .dropzone-subtext {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+      }
+
+      .button-secondary {
+        border: 1px solid var(--border);
+        background: #ffffff;
+        color: var(--text);
+        border-radius: var(--radius-input);
+        padding: 8px 14px;
+        font-size: 0.85rem;
+        cursor: pointer;
+      }
+
+      .button-secondary:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+      }
+
+      .file-info {
+        margin-top: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-input);
+        background: #f9fafb;
+      }
+
+      .file-icon {
+        font-size: 1rem;
+      }
+
+      .file-name {
+        font-size: 0.85rem;
+        color: var(--text);
+      }
+
+      .file-remove {
+        border: none;
+        background: transparent;
+        color: var(--text-secondary);
+        cursor: pointer;
+        font-size: 1rem;
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 120px;
+        resize: vertical;
+        border-radius: var(--radius-input);
+        border: 1px solid var(--border);
+        padding: 12px;
+        font-family: inherit;
+        font-size: 0.95rem;
+      }
+
+      textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+      }
+
+      .char-count {
+        text-align: right;
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin-top: 6px;
+      }
+
+      .button-primary {
+        width: 100%;
+        border: none;
+        border-radius: var(--radius-input);
+        padding: 14px 18px;
+        font-size: 1rem;
+        font-weight: 600;
+        background: var(--primary);
+        color: #ffffff;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: background 0.2s ease;
+      }
+
+      .button-primary:hover:not(:disabled) {
+        background: var(--primary-dark);
+      }
+
+      .button-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .spinner {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        border: 2px solid rgba(255, 255, 255, 0.4);
+        border-top-color: #ffffff;
+        animation: spin 0.8s linear infinite;
+      }
+
+      .error-message {
+        margin-top: 12px;
+        padding: 10px;
+        border-radius: var(--radius-input);
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        color: var(--danger);
+        font-size: 0.88rem;
+      }
+
+      .loading-card {
+        text-align: center;
+        padding: 40px 24px;
+      }
+
+      .spinner-lg {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: 3px solid rgba(79, 70, 229, 0.15);
+        border-top-color: var(--primary);
+        margin: 0 auto 16px;
+        animation: spin 0.8s linear infinite;
+      }
+
+      .loading-title {
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+
+      .loading-subtitle {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        opacity: 0;
+        transition: opacity 0.4s ease;
+      }
+
+      .loading-subtitle.fade-in {
+        opacity: 1;
+      }
+
+      .profile-card {
+        margin-bottom: 24px;
+      }
+
+      .profile-top {
+        display: flex;
+        gap: 24px;
+        align-items: flex-start;
+        justify-content: space-between;
+        flex-wrap: wrap;
+      }
+
+      .profile-left {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+      }
+
+      .avatar {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: var(--primary);
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 1.1rem;
+      }
+
+      .profile-name {
+        font-weight: 600;
+        font-size: 1rem;
+      }
+
+      .profile-title {
+        font-size: 0.88rem;
+        color: var(--text-secondary);
+        margin-top: 4px;
+      }
+
+      .score-bars {
+        min-width: 260px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .score-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.82rem;
+      }
+
+      .score-label {
+        flex: 1;
+        color: var(--text-secondary);
+      }
+
+      .score-percent {
+        font-weight: 500;
+        color: var(--text);
+      }
+
+      .score-bar {
+        width: 100%;
+        height: 6px;
+        background: #eef2ff;
+        border-radius: 999px;
+        overflow: hidden;
+      }
+
+      .score-fill {
+        height: 100%;
+        width: 0;
+        background: var(--primary);
+        border-radius: 999px;
+        transition: width 0.8s ease;
+      }
+
+      .skills-row {
+        margin-top: 16px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .info-row {
+        margin-top: 12px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .info-pill {
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        font-weight: 500;
+      }
+
+      .info-pill.sector {
+        background: #eef2ff;
+        color: var(--primary);
+      }
+
+      .info-pill.experience {
+        background: #f0fdf4;
+        color: var(--success);
+      }
+
+      .skill-pill {
+        background: #eef2ff;
+        color: var(--primary);
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-size: 0.8rem;
+      }
+
+      .section-title {
+        font-weight: 600;
+        margin: 24px 0 12px;
+      }
+
+      .job-card {
+        background: var(--card);
+        border-radius: var(--radius-card);
+        box-shadow: var(--shadow);
+        padding: 18px;
+        margin-bottom: 16px;
+      }
+
+      .job-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .job-title {
+        font-weight: 600;
+        font-size: 0.95rem;
+      }
+
+      .badges {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .badge {
+        font-size: 0.75rem;
+        padding: 4px 8px;
+        border-radius: 999px;
+        font-weight: 600;
+      }
+
+      .badge-success {
+        background: #dcfce7;
+        color: var(--success);
+      }
+
+      .badge-warning {
+        background: #fef9c3;
+        color: var(--warning);
+      }
+
+      .badge-primary {
+        background: var(--primary);
+        color: #ffffff;
+      }
+
+      .job-meta {
+        margin-top: 6px;
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+      }
+
+      .job-tags {
+        margin-top: 10px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .job-tag {
+        background: #f3f4f6;
+        color: #374151;
+        padding: 4px 8px;
+        border-radius: 999px;
+        font-size: 0.75rem;
+      }
+
+      .job-reason {
+        margin-top: 10px;
+        border-top: 1px solid var(--border);
+        padding-top: 10px;
+        font-size: 0.82rem;
+        color: var(--text-secondary);
+      }
+
+      .job-reason strong {
+        color: var(--text);
+      }
+
+      .job-ds {
+        margin-top: 8px;
+        font-size: 0.78rem;
+        color: var(--text-secondary);
+      }
+
+      .job-ds span {
+        color: var(--primary);
+        font-weight: 500;
+      }
+
+      .outline-button {
+        margin-top: 12px;
+        display: inline-block;
+        border: 1px solid var(--primary);
+        color: var(--primary);
+        padding: 8px 12px;
+        border-radius: var(--radius-input);
+        text-decoration: none;
+        font-size: 0.85rem;
+        transition: background 0.2s ease;
+      }
+
+      .outline-button:hover {
+        background: #eef2ff;
+      }
+
+      .link-button {
+        border: none;
+        background: transparent;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        cursor: pointer;
+        display: block;
+        margin: 12px auto 0;
+      }
+
+      .link-button:hover {
+        color: var(--text);
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <div class="app-title">CV Career Matcher</div>
+        <div class="app-subtitle">Sube tu CV y recibe recomendaciones de empleo personalizadas</div>
+      </div>
+      <div class="status">
+        <span id="serverStatusDot" class="status-dot"></span>
+        <span id="serverStatusText">Servidor inactivo</span>
+      </div>
+    </header>
+
+    <main class="main">
+      <section id="phase-form" class="phase">
+        <form id="cvForm" class="card">
+          <div class="form-group">
+            <label class="label">Sube tu CV</label>
+            <div id="dropzone" class="dropzone">
+              <div class="dropzone-text">Arrastra tu archivo aquí</div>
+              <div class="dropzone-subtext">PDF o imagen · Máximo 10MB</div>
+              <button id="selectFileBtn" type="button" class="button-secondary">
+                Seleccionar archivo
+              </button>
+              <input id="fileInput" type="file" accept=".pdf,image/*" hidden />
+              <div id="fileInfo" class="file-info hidden">
+                <span class="file-icon">📄</span>
+                <span id="fileName" class="file-name"></span>
+                <button id="removeFileBtn" type="button" class="file-remove">×</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="label">O pega tu CV</label>
+            <textarea
+              id="cvText"
+              placeholder="Pega aquí el contenido completo de tu CV..."
+            ></textarea>
+            <div id="charCount" class="char-count">0 caracteres</div>
+          </div>
+
+          <button id="analyzeBtn" type="submit" class="button-primary" disabled>
+            <span id="btnSpinner" class="spinner hidden"></span>
+            <span id="btnText">Analizar CV</span>
+          </button>
+
+          <div id="errorMessage" class="error-message hidden">
+            No se pudo conectar con el servidor. Verifica que el backend esté corriendo.
+          </div>
+        </form>
+      </section>
+
+      <section id="phase-loading" class="phase hidden">
+        <div class="card loading-card">
+          <div class="spinner-lg"></div>
+          <div class="loading-title">Analizando tu CV...</div>
+          <div id="loadingMessage" class="loading-subtitle">Leyendo tu CV...</div>
+        </div>
+      </section>
+
+      <section id="phase-results" class="phase hidden">
+        <div class="card profile-card">
+          <div class="profile-top">
+            <div class="profile-left">
+              <div id="profileAvatar" class="avatar">CV</div>
+              <div>
+                <div id="profileName" class="profile-name">Perfil analizado</div>
+                <div id="profileTitle" class="profile-title">Profesional</div>
+              </div>
+            </div>
+            <div id="scoreBars" class="score-bars"></div>
+          </div>
+          <div id="infoPills" class="info-row"></div>
+          <div id="skillsRow" class="skills-row"></div>
+        </div>
+
+        <div class="section-title">Puestos recomendados</div>
+        <div id="jobsList"></div>
+
+        <button id="restartBtn" type="button" class="link-button">← Analizar otro CV</button>
+      </section>
+    </main>
+
+    <script>
+      const API_BASE = "";
+      const loadingMessages = [
+        "Leyendo tu CV...",
+        "Detectando habilidades y experiencia...",
+        "Comparando con 33,000 ofertas de LinkedIn...",
+        "Generando recomendaciones personalizadas...",
+      ];
+
+      const serverStatusDot = document.getElementById("serverStatusDot");
+      const serverStatusText = document.getElementById("serverStatusText");
+      const phaseForm = document.getElementById("phase-form");
+      const phaseLoading = document.getElementById("phase-loading");
+      const phaseResults = document.getElementById("phase-results");
+      const form = document.getElementById("cvForm");
+      const dropzone = document.getElementById("dropzone");
+      const fileInput = document.getElementById("fileInput");
+      const selectFileBtn = document.getElementById("selectFileBtn");
+      const removeFileBtn = document.getElementById("removeFileBtn");
+      const fileInfo = document.getElementById("fileInfo");
+      const fileName = document.getElementById("fileName");
+      const cvText = document.getElementById("cvText");
+      const charCount = document.getElementById("charCount");
+      const analyzeBtn = document.getElementById("analyzeBtn");
+      const btnSpinner = document.getElementById("btnSpinner");
+      const btnText = document.getElementById("btnText");
+      const errorMessage = document.getElementById("errorMessage");
+      const loadingMessage = document.getElementById("loadingMessage");
+      const profileAvatar = document.getElementById("profileAvatar");
+      const profileName = document.getElementById("profileName");
+      const profileTitle = document.getElementById("profileTitle");
+      const scoreBars = document.getElementById("scoreBars");
+      const infoPills = document.getElementById("infoPills");
+      const skillsRow = document.getElementById("skillsRow");
+      const jobsList = document.getElementById("jobsList");
+      const restartBtn = document.getElementById("restartBtn");
+
+      let selectedFile = null;
+      let loadingInterval = null;
+
+      const setPhase = (phase) => {
+        phaseForm.classList.toggle("hidden", phase !== "form");
+        phaseLoading.classList.toggle("hidden", phase !== "loading");
+        phaseResults.classList.toggle("hidden", phase !== "results");
+      };
+
+      const setButtonLoading = (isLoading) => {
+        btnSpinner.classList.toggle("hidden", !isLoading);
+        btnText.textContent = isLoading ? "Analizando..." : "Analizar CV";
+        analyzeBtn.disabled = isLoading || !isFormValid();
+      };
+
+      const isFormValid = () => {
+        return Boolean(selectedFile || cvText.value.trim().length > 0);
+      };
+
+      const updateButtonState = () => {
+        analyzeBtn.disabled = !isFormValid();
+      };
+
+      const updateCharCount = () => {
+        charCount.textContent = `${cvText.value.length} caracteres`;
+      };
+
+      const setFile = (file) => {
+        selectedFile = file;
+        if (file) {
+          fileName.textContent = file.name;
+          fileInfo.classList.remove("hidden");
+          dropzone.classList.add("has-file");
+        } else {
+          fileName.textContent = "";
+          fileInfo.classList.add("hidden");
+          dropzone.classList.remove("has-file");
+        }
+        updateButtonState();
+      };
+
+      const clearError = () => errorMessage.classList.add("hidden");
+      const showError = () => errorMessage.classList.remove("hidden");
+
+      const checkServerHealth = async () => {
+        try {
+          const response = await fetch(`${API_BASE}/health`, { method: "GET" });
+          if (response.ok) {
+            serverStatusDot.classList.add("active");
+            serverStatusText.textContent = "Servidor activo";
+            return;
+          }
+        } catch (_) {}
+        serverStatusDot.classList.remove("active");
+        serverStatusText.textContent = "Servidor inactivo";
+      };
+
+      const startLoadingMessages = () => {
+        let index = 0;
+        loadingMessage.textContent = loadingMessages[index];
+        loadingMessage.classList.add("fade-in");
+        loadingInterval = setInterval(() => {
+          loadingMessage.classList.remove("fade-in");
+          void loadingMessage.offsetWidth;
+          index = (index + 1) % loadingMessages.length;
+          loadingMessage.textContent = loadingMessages[index];
+          loadingMessage.classList.add("fade-in");
+        }, 2500);
+      };
+
+      const stopLoadingMessages = () => {
+        if (loadingInterval) {
+          clearInterval(loadingInterval);
+          loadingInterval = null;
+        }
+      };
+
+      const pickValue = (obj, keys, fallback = "") => {
+        for (const key of keys) {
+          if (obj && obj[key] !== undefined && obj[key] !== null && obj[key] !== "") {
+            return obj[key];
+          }
+        }
+        return fallback;
+      };
+
+      const createScoreRow = (label, value) => {
+        const container = document.createElement("div");
+
+        const row = document.createElement("div");
+        row.className = "score-row";
+
+        const labelEl = document.createElement("div");
+        labelEl.className = "score-label";
+        labelEl.textContent = label;
+
+        const percentEl = document.createElement("div");
+        percentEl.className = "score-percent";
+        percentEl.textContent = `${value}%`;
+
+        row.appendChild(labelEl);
+        row.appendChild(percentEl);
+
+        const bar = document.createElement("div");
+        bar.className = "score-bar";
+
+        const fill = document.createElement("div");
+        fill.className = "score-fill";
+        fill.dataset.target = value;
+        bar.appendChild(fill);
+
+        container.appendChild(row);
+        container.appendChild(bar);
+        return container;
+      };
+
+      const renderResults = (data) => {
+        const name = data?.nombre || "Perfil analizado";
+        const initials = data?.iniciales || "CV";
+        const title = data?.titulo_perfil || "Profesional";
+        const skills = Array.isArray(data?.habilidades) ? data.habilidades : [];
+        const scores = data?.scores || {};
+
+        profileAvatar.textContent = initials;
+        profileName.textContent = name;
+        profileTitle.textContent = title;
+
+        scoreBars.innerHTML = "";
+        const scoreConfig = [
+          { label: "Experiencia", keys: ["experiencia", "experience"] },
+          { label: "Habilidades técnicas", keys: ["habilidades_tecnicas", "technical_skills"] },
+          { label: "Formación", keys: ["formacion", "education"] },
+          { label: "Mercado laboral", keys: ["mercado_laboral", "market"] },
+        ];
+
+        scoreConfig.forEach((item) => {
+          const value = Number(pickValue(scores, item.keys, 0));
+          const safeValue = Number.isFinite(value) ? Math.round(value) : 0;
+          scoreBars.appendChild(createScoreRow(item.label, safeValue));
+        });
+
+        infoPills.innerHTML = "";
+        const sectorPill = document.createElement("span");
+        sectorPill.className = "info-pill sector";
+        sectorPill.textContent = `Sector: ${data?.sector_detectado || "No definido"}`;
+        const experiencePill = document.createElement("span");
+        experiencePill.className = "info-pill experience";
+        experiencePill.textContent = `Experiencia: ${data?.anos_experiencia || "N/D"} años`;
+        infoPills.appendChild(sectorPill);
+        infoPills.appendChild(experiencePill);
+
+        skillsRow.innerHTML = "";
+        skills.slice(0, 10).forEach((skill) => {
+          const pill = document.createElement("span");
+          pill.className = "skill-pill";
+          pill.textContent = skill;
+          skillsRow.appendChild(pill);
+        });
+
+        jobsList.innerHTML = "";
+        const jobs = Array.isArray(data?.puestos) ? data.puestos.slice(0, 5) : [];
+
+        jobs.forEach((job, index) => {
+          const matchRaw = Number(pickValue(job, ["match", "match_percent", "compatibilidad", "score"], 0));
+          const match = Number.isFinite(matchRaw) ? Math.round(matchRaw) : 0;
+          const badgeClass = match >= 85 ? "badge badge-success" : "badge badge-warning";
+          const titleText = pickValue(job, ["titulo", "job_title", "title"], "Puesto recomendado");
+
+          const card = document.createElement("div");
+          card.className = "job-card";
+
+          const header = document.createElement("div");
+          header.className = "job-header";
+
+          const titleEl = document.createElement("div");
+          titleEl.className = "job-title";
+          titleEl.textContent = titleText;
+
+          const badges = document.createElement("div");
+          badges.className = "badges";
+
+          const matchBadge = document.createElement("span");
+          matchBadge.className = badgeClass;
+          matchBadge.textContent = `${match}% match`;
+          badges.appendChild(matchBadge);
+
+          if (index === 0) {
+            const bestBadge = document.createElement("span");
+            bestBadge.className = "badge badge-primary";
+            bestBadge.textContent = "Mejor coincidencia";
+            badges.appendChild(bestBadge);
+          }
+
+          header.appendChild(titleEl);
+          header.appendChild(badges);
+
+          const metaValues = [];
+          const companyType = pickValue(job, ["empresa_tipo", "company_type"], "");
+          const modality = pickValue(job, ["modalidad", "work_type"], "");
+          const level = pickValue(job, ["nivel", "job_level"], "");
+          const salary = pickValue(job, ["salario_rango", "salary_range"], "");
+          if (companyType) metaValues.push(companyType);
+          if (modality) metaValues.push(modality);
+          if (level) metaValues.push(level);
+          if (salary) metaValues.push(salary);
+
+          const meta = document.createElement("div");
+          meta.className = "job-meta";
+          meta.textContent = metaValues.length ? metaValues.join(" · ") : "Información no disponible";
+
+          const tags = document.createElement("div");
+          tags.className = "job-tags";
+          const skillTags = Array.isArray(job?.tags) ? job.tags : [];
+          skillTags.slice(0, 6).forEach((skill) => {
+            const tag = document.createElement("span");
+            tag.className = "job-tag";
+            tag.textContent = skill;
+            tags.appendChild(tag);
+          });
+
+          const reason = document.createElement("div");
+          reason.className = "job-reason";
+          const reasonText = pickValue(job, ["razon", "why_match", "justificacion"], "");
+          reason.innerHTML = `<strong>Por qué encaja:</strong> ${reasonText || "Coincide con tu experiencia y habilidades."}`;
+
+          // CORRECCIÓN: ds_matches es array de objetos, no strings
+          const dsMatches = Array.isArray(job?.ds_matches) ? job.ds_matches : [];
+          const dsRow = document.createElement("div");
+          dsRow.className = "job-ds";
+          if (dsMatches.length) {
+            const companies = dsMatches
+              .slice(0, 3)
+              .map((m) => m.company || m.job_title || "")
+              .filter(Boolean)
+              .join(", ");
+            if (companies) {
+              dsRow.innerHTML = `Ofertas similares en LinkedIn: <span>${companies}</span>`;
+            }
+          }
+
+          const keywords = pickValue(job, ["keywords_dataset", "keywords", "titulo"], titleText);
+          const link = document.createElement("a");
+          link.className = "outline-button";
+          link.textContent = "Ver ofertas en LinkedIn";
+          link.target = "_blank";
+          link.rel = "noopener";
+          link.href = `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(keywords || titleText)}`;
+
+          card.appendChild(header);
+          card.appendChild(meta);
+          card.appendChild(tags);
+          card.appendChild(reason);
+          if (dsMatches.length) card.appendChild(dsRow);
+          card.appendChild(link);
+
+          jobsList.appendChild(card);
+        });
+
+        setTimeout(() => {
+          document.querySelectorAll(".score-fill").forEach((fill) => {
+            fill.style.width = `${Number(fill.dataset.target || 0)}%`;
+          });
+        }, 100);
+      };
+
+      const resetForm = () => {
+        cvText.value = "";
+        updateCharCount();
+        fileInput.value = "";
+        setFile(null);
+        clearError();
+        updateButtonState();
+        setPhase("form");
+      };
+
+      selectFileBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        fileInput.click();
+      });
+
+      dropzone.addEventListener("click", () => fileInput.click());
+
+      fileInput.addEventListener("change", (event) => {
+        const file = event.target.files[0];
+        setFile(file || null);
+      });
+
+      removeFileBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        fileInput.value = "";
+        setFile(null);
+      });
+
+      dropzone.addEventListener("dragover", (event) => {
+        event.preventDefault();
+        dropzone.classList.add("dragover");
+      });
+
+      dropzone.addEventListener("dragleave", () => dropzone.classList.remove("dragover"));
+
+      dropzone.addEventListener("drop", (event) => {
+        event.preventDefault();
+        dropzone.classList.remove("dragover");
+        const file = event.dataTransfer.files[0];
+        setFile(file || null);
+      });
+
+      cvText.addEventListener("input", () => {
+        updateCharCount();
+        updateButtonState();
+      });
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        clearError();
+        if (!isFormValid()) return;
+
+        setButtonLoading(true);
+        setPhase("loading");
+        startLoadingMessages();
+
+        const formData = new FormData();
+        if (selectedFile) formData.append("cv_file", selectedFile);
+        if (cvText.value.trim()) formData.append("cv_text", cvText.value.trim());
+
+        try {
+          const response = await fetch(`${API_BASE}/analyze`, {
+            method: "POST",
+            body: formData,
+          });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const data = await response.json();
+          stopLoadingMessages();
+          renderResults(data);
+          setPhase("results");
+        } catch (error) {
+          console.error("Error al analizar:", error);
+          stopLoadingMessages();
+          setPhase("form");
+          showError();
+        } finally {
+          setButtonLoading(false);
+        }
+      });
+
+      restartBtn.addEventListener("click", resetForm);
+
+      updateCharCount();
+      updateButtonState();
+      checkServerHealth();
+      setInterval(checkServerHealth, 30000);
+    </script>
+  </body>
+</html>
+<!--
+  INSTRUCCIONES DE USO
+  1. Asegurate que el backend esta corriendo:
+     cd backend && uvicorn main:app --reload --port 8000
+  2. Abre http://127.0.0.1:8000 en el navegador
+-->

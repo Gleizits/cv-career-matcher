@@ -1,79 +1,78 @@
 from __future__ import annotations
 
+import shutil
 import time
 from pathlib import Path
-import shutil
 
 import pandas as pd
 
-COLUMNS = [
-    "job_link",
-    "job_title",
-    "company",
-    "job_location",
-    "job_level",
-    "job_type",
-    "job_skills",
-    "job_summary",
-]
+DATASET_FILE = "job_postings.csv"
+DATASET_ID = "arshkon/linkedin-job-postings"
+
+COLUMN_MAP = {
+    "title": "job_title",
+    "company_name": "company",
+    "location": "job_location",
+    "formatted_experience_level": "job_level",
+    "formatted_work_type": "job_type",
+    "skills_desc": "job_skills",
+    "description": "job_summary",
+    "job_posting_url": "job_link",
+}
+
+SEARCH_COLUMNS = ["_title", "_skills", "_summary"]
+SEARCH_WEIGHTS = {"_title": 3, "_skills": 2, "_summary": 1}
+
 _jobs_df: pd.DataFrame | None = None
+
+
+def _download_dataset() -> bool:
+    base_dir = Path(__file__).resolve().parent
+    target_path = base_dir / DATASET_FILE
+    if target_path.exists():
+        return True
+    try:
+        import kagglehub
+
+        dataset_path = Path(kagglehub.dataset_download(DATASET_ID))
+        candidates = list(dataset_path.rglob(DATASET_FILE))
+        if not candidates:
+            print(f"Advertencia: no se encontró {DATASET_FILE} en el dataset descargado.")
+            return False
+        shutil.copy(candidates[0], target_path)
+        return True
+    except Exception as exc:
+        print(f"Advertencia: no se pudo descargar el dataset desde Kaggle: {exc}")
+        return False
 
 
 def load_dataset() -> int:
     global _jobs_df
 
-    started_at = time.perf_counter()
+    started_at = time.time()
     base_dir = Path(__file__).resolve().parent
-    postings_path = base_dir / "linkedin_job_postings.csv"
-    skills_path = base_dir / "job_skills.csv"
-    summary_path = base_dir / "job_summary.csv"
+    postings_path = base_dir / DATASET_FILE
 
-    required_files = [postings_path, skills_path, summary_path]
-    missing_files = [str(file_path) for file_path in required_files if not file_path.exists()]
-    if missing_files:
-        try:
-            import kagglehub
-
-            path = Path(kagglehub.dataset_download("asaniczka/1-3m-linkedin-jobs-and-skills-2024"))
-            for target_file in required_files:
-                if target_file.exists():
-                    continue
-                candidates = list(path.rglob(target_file.name))
-                if candidates:
-                    shutil.copy(candidates[0], target_file)
-        except Exception as e:
-            print(f"Advertencia: no se pudo descargar el dataset desde Kaggle: {e}")
-            _jobs_df = None
-            return 0
-
-        missing_files = [str(file_path) for file_path in required_files if not file_path.exists()]
-        if missing_files:
-            for missing_file in missing_files:
-                print(f"Advertencia: archivo no encontrado: {missing_file}")
-            _jobs_df = None
-            return 0
+    if not _download_dataset() or not postings_path.exists():
+        _jobs_df = None
+        return 0
 
     try:
-        postings = pd.read_csv(postings_path)
-        skills = pd.read_csv(skills_path)
-        summary = pd.read_csv(summary_path)
+        postings = pd.read_csv(postings_path, low_memory=False)
+        postings = postings[list(COLUMN_MAP.keys())].rename(columns=COLUMN_MAP)
+        postings = postings[list(COLUMN_MAP.values())].copy()
+        postings = postings.fillna("")
 
-        merged = postings.merge(skills, on="job_link", how="left")
-        merged = merged.merge(summary, on="job_link", how="left")
-        merged = merged[COLUMNS].copy()
-        merged = merged.fillna("")
+        postings["_title"] = postings["job_title"].astype(str).str.lower()
+        postings["_skills"] = postings["job_skills"].astype(str).str.lower()
+        postings["_summary"] = postings["job_summary"].astype(str).str.lower()
 
-        merged["_title"] = merged["job_title"].astype(str).str.lower()
-        merged["_skills"] = merged["job_skills"].astype(str).str.lower()
-        merged["_summary"] = merged["job_summary"].astype(str).str.lower()
-
-        _jobs_df = merged
-        total_jobs = int(len(_jobs_df))
-        elapsed = time.perf_counter() - started_at
-        print(f"Dataset cargado en {elapsed:.1f}s — {total_jobs:,} empleos")
-        return total_jobs
-    except Exception as e:
-        print(f"Advertencia: no se pudo cargar el dataset: {e}")
+        _jobs_df = postings
+        elapsed = time.time() - started_at
+        print(f"Dataset cargado en {elapsed:.1f}s — {len(_jobs_df):,} empleos")
+        return len(_jobs_df)
+    except Exception as exc:
+        print(f"Advertencia: no se pudo cargar el dataset: {exc}")
         _jobs_df = None
         return 0
 
@@ -85,16 +84,16 @@ def search_jobs(keywords: str, top_n: int = 5) -> list[dict[str, str]]:
     if not keywords or not keywords.strip():
         return []
 
-    tokens: list[str] = [token.lower() for token in keywords.split() if len(token) > 2]
+    tokens = [token.lower() for token in keywords.split() if len(token) > 2]
     if not tokens:
         return []
 
     try:
         score = pd.Series(0, index=_jobs_df.index, dtype="int64")
         for token in tokens:
-            score += _jobs_df["_title"].str.contains(token, regex=False, na=False).astype(int) * 3
-            score += _jobs_df["_skills"].str.contains(token, regex=False, na=False).astype(int) * 2
-            score += _jobs_df["_summary"].str.contains(token, regex=False, na=False).astype(int) * 1
+            for column in SEARCH_COLUMNS:
+                weight = SEARCH_WEIGHTS.get(column, 1)
+                score += _jobs_df[column].str.contains(token, regex=False, na=False).astype(int) * weight
         matches = _jobs_df.loc[score > 0].copy()
         if matches.empty:
             return []
@@ -114,8 +113,8 @@ def search_jobs(keywords: str, top_n: int = 5) -> list[dict[str, str]]:
                 }
             )
         return results
-    except Exception as e:
-        print(f"Error al buscar empleos en el dataset: {e}")
+    except Exception as exc:
+        print(f"Error al buscar empleos en el dataset: {exc}")
         return []
 
 
